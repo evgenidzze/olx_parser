@@ -27,9 +27,12 @@ async def start_mail_handler(url, chat_id):
     soup = BeautifulSoup(page.text, 'lxml')
     ad_objects = soup.find_all('div', class_='css-1sw7q4x')
     for flat in ad_objects:
+        flat_date_tag = None
         flat_link_tag = flat.find('a', class_='css-rc5s2u')
-        flat_date_tag = flat.find('p', class_='css-veheph er34gjf0')
+        date_div = flat.find('div', class_='css-odp1qd')
 
+        if date_div:
+            flat_date_tag = date_div.find('p')
         if flat_link_tag and flat_date_tag and 'Сьогодні' in flat_date_tag.text:
             date = flat_date_tag.text
             publish_time = datetime.datetime.strptime(date.split('о')[-1].strip(), '%H:%M')
