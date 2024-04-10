@@ -12,12 +12,13 @@ from utils import link_in_json, add_link_json
 
 
 async def start(message: types.Message, state: FSMContext):
-    job = scheduler.get_job(str(message.from_user.id))
+    job = scheduler.get_job('flats')
+    url = 'https://www.olx.ua/uk/nedvizhimost/kvartiry/dolgosrochnaya-arenda-kvartir/kiev/?currency=UAH&search%5Border%5D=created_at:desc&search%5Bfilter_float_price:to%5D=11000'
+    price = url.split('=')[-1] if url.split('=')[-1].isdigit() else '...'
     if not job:
-        url = 'https://www.olx.ua/uk/nedvizhimost/kvartiry/dolgosrochnaya-arenda-kvartir/kiev/?currency=UAH&search%5Border%5D=created_at:desc&search%5Bfilter_float_price:to%5D=15000'
-        scheduler.add_job(start_mail_handler, trigger='interval', seconds=10, id=str(message.from_user.id),
+        scheduler.add_job(start_mail_handler, trigger='interval', seconds=10, id="flats",
                           kwargs={'url': url, 'chat_id': message.from_user.id})
-    await message.answer(text='Ви підписались на розсилку квартир до 15000грн, очікуйте нові оголошення...\n\n'
+    await message.answer(text=f'Ви підписались на розсилку квартир до {price}грн, очікуйте нові оголошення...\n\n'
                               'Щоб змінити критерії, змініть посилання з новими фільтрами.',
                          reply_markup=menu)
 
@@ -28,9 +29,8 @@ async def start_mail_handler(url, chat_id):
     ad_objects = soup.find_all('div', class_='css-1sw7q4x')
     for flat in ad_objects:
         flat_date_tag = None
-        flat_link_tag = flat.find('a', class_='css-rc5s2u')
+        flat_link_tag = flat.find('a', class_='css-z3gu2d')
         date_div = flat.find('div', class_='css-odp1qd')
-
         if date_div:
             flat_date_tag = date_div.find('p')
         if flat_link_tag and flat_date_tag and 'Сьогодні' in flat_date_tag.text:
@@ -47,9 +47,10 @@ async def start_mail_handler(url, chat_id):
                 flat_name = None
                 if flat_name_tag:
                     flat_name = flat_name_tag.text
-                await bot.send_message(chat_id=chat_id, text=f"Сьогодні о {publish_time}\n\n"
-                                                             f"{flat_name}\n\n"
-                                                             f"{flat_link}")
+                for ch_id in (chat_id, 546027799):
+                    await bot.send_message(chat_id=ch_id, text=f"Сьогодні о {publish_time}\n\n"
+                                                                 f"{flat_name}\n\n"
+                                                                 f"{flat_link}")
 
 
 class FSMParser(StatesGroup):
